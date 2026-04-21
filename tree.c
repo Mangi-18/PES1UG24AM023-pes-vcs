@@ -23,6 +23,20 @@ static int write_tree_level(IndexEntry *entries, int count,
 
 Tree tree;
 tree.count=0;
+int i = 0;
+while (i < count) {
+    const char *path = entries[i].path + prefix_len;
+    const char *slash = strchr(path, '/');
+
+    if (!slash) {
+        // file case (we’ll fill next)
+        i++;
+    } else {
+        // directory case (we’ll fill later)
+        i++;
+    }
+}
+
 return -1;
 }
 // ─── Mode Constants ─────────────────────────────────────────────────────────
