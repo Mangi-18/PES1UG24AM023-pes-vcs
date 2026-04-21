@@ -19,8 +19,12 @@
 
 static int write_tree_level(IndexEntry *entries, int count,
                            const char *prefix, size_t prefix_len,
-                           ObjectID *id_out);
+                           ObjectID *id_out){
 
+Tree tree;
+tree.count=0;
+return -1;
+}
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
