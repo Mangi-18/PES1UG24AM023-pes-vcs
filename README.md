@@ -659,6 +659,7 @@ To delete unused objects:
 •	Store all reachable hashes 
 •	Delete everything else in .pes/objects/ 
 Use a hash set for tracking.
+
 Q6.2
 GC during commit is dangerous because:
 •	commit is being created step by step 
