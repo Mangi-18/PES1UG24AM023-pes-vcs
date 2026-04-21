@@ -131,6 +131,33 @@ snprintf(final_path, sizeof(final_path), "%s/%.2s/%s", OBJECTS_DIR, hex, hex + 2
 
 char tmp_path[264];
 snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", final_path);
+int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+if (fd < 0) {
+    free(full_obj);
+    return -1;
+}
+
+if (write(fd, full_obj, total_len) != (ssize_t)total_len) {
+    close(fd);
+    free(full_obj);
+    return -1;
+}
+
+fsync(fd);
+close(fd);
+free(full_obj);
+
+if (rename(tmp_path, final_path) != 0) return -1;
+
+int dir_fd = open(shard_dir, O_RDONLY);
+if (dir_fd >= 0) {
+    fsync(dir_fd);
+    close(dir_fd);
+}
+
+*id_out = id;
+return 0;
+
 
 
 }
