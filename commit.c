@@ -201,9 +201,17 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
         return -1;
     }
 
-    (void)message;
-    (void)commit_id_out;
-    return -1;
+    Commit c;
+memset(&c, 0, sizeof(c));
+c.tree = tree_id;
+c.timestamp = (uint64_t)time(NULL);
+
+snprintf(c.author, sizeof(c.author), "%s", pes_author());
+snprintf(c.message, sizeof(c.message), "%s", message);
+
+(void)commit_id_out;
+return -1; 
+
 }
 
 
