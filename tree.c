@@ -18,27 +18,74 @@
 
 
 static int write_tree_level(IndexEntry *entries, int count,
-                           const char *prefix, size_t prefix_len,
-                           ObjectID *id_out){
+                             const char *prefix, size_t prefix_len,
+                             ObjectID *id_out) {
+    Tree tree;
+    tree.count = 0;
 
-Tree tree;
-tree.count=0;
-int i = 0;
-while (i < count) {
-    const char *path = entries[i].path + prefix_len;
-    const char *slash = strchr(path, '/');
+    int i = 0;
+    while (i < count) {
+        const char *path = entries[i].path + prefix_len;
+        const char *slash = strchr(path, '/');
 
-    if (!slash) {
-        // file case (we’ll fill next)
-        i++;
-    } else {
-        // directory case (we’ll fill later)
-        i++;
+        if (!slash) {
+            // File directly in this level
+            TreeEntry *e = &tree.entries[tree.count++];
+            e->mode = entries[i].mode;
+            e->hash = entries[i].hash;
+            strncpy(e->name, path, sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+            i++;
+        } else {
+            // File inside a subdirectory
+            size_t dir_name_len = (size_t)(slash - path);
+            char dir_name[256];
+            strncpy(dir_name, path, dir_name_len);
+            dir_name[dir_name_len] = '\0';
+
+            // Find all entries belonging to this directory
+            int j = i;
+            while (j < count) {
+                const char *p2 = entries[j].path + prefix_len;
+                if (strncmp(p2, dir_name, dir_name_len) != 0 ||
+                    p2[dir_name_len] != '/')
+                    break;
+                j++;
+            }
+
+            // Build subtree recursively
+            char new_prefix[512];
+            snprintf(new_prefix, sizeof(new_prefix), "%.*s%s/",
+                     (int)prefix_len, prefix, dir_name);
+
+            ObjectID subtree_id;
+            if (write_tree_level(entries, j, new_prefix, strlen(new_prefix),
+                                 &subtree_id) != 0)
+                return -1;
+
+            // Add directory entry
+            TreeEntry *e = &tree.entries[tree.count++];
+            e->mode = 0040000;
+            e->hash = subtree_id;
+            strncpy(e->name, dir_name, sizeof(e->name) - 1);
+            e->name[sizeof(e->name) - 1] = '\0';
+
+            i = j;
+        }
     }
+
+    void *tree_data;
+    size_t tree_len;
+    if (tree_serialize(&tree, &tree_data, &tree_len) != 0) return -1;
+
+    int rc = object_write(OBJ_TREE, tree_data, tree_len, id_out);
+    free(tree_data);
+    return rc;
 }
 
-return -1;
-}
+
+
+
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
