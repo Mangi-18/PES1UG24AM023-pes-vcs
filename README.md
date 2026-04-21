@@ -622,7 +622,9 @@ The following questions cover filesystem concepts beyond the implementation scop
 
 
 ## Question answers
+
 ##Phase 5
+
 Q5.1
 Checkout means switching to another branch.
 •	Update .pes/HEAD to point to that branch 
