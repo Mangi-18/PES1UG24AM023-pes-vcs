@@ -16,6 +16,11 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+
+static int write_tree_level(IndexEntry *entries, int count,
+                           const char *prefix, size_t prefix_len,
+                           ObjectID *id_out);
+
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
 #define MODE_FILE      0100644
