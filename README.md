@@ -619,3 +619,49 @@ The following questions cover filesystem concepts beyond the implementation scop
 ![4A](phase4_4a.png)
 ![4B](phase4_4b.png)
 ![4C](phase4_4c.png)
+
+
+## Question answers
+###Phase 5
+Q5.1
+Checkout means switching to another branch.
+•	Update .pes/HEAD to point to that branch 
+•	Read commit from .pes/refs/heads/<branch> 
+•	Get its tree 
+•	Recreate files in working directory from that tree 
+•	Update index 
+Hard part: handling existing files and uncommitted changes.
+
+Q5.2
+To check if working directory is dirty:
+•	For each file in index 
+o	hash current file 
+o	compare with stored hash 
+If different → modified
+If missing → deleted
+If anything changed → don’t allow checkout.
+
+Q5.3
+Detached HEAD = HEAD points to a commit, not a branch.
+•	Commits can still be made 
+•	But they are not saved in any branch 
+•	They can be lost 
+Fix: create a branch from that commit
+
+
+### Phase 6
+Q6.1
+To delete unused objects:
+•	Start from all branch heads 
+•	Follow commits → trees → blobs 
+•	Store all reachable hashes 
+•	Delete everything else in .pes/objects/ 
+Use a hash set for tracking.
+Q6.2
+GC during commit is dangerous because:
+•	commit is being created step by step 
+•	GC might delete objects before commit finishes 
+Result → broken repo
+Git avoids this using locks and safe writes.
+
+
