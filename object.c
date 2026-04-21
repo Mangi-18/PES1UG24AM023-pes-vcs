@@ -126,6 +126,12 @@ snprintf(shard_dir, sizeof(shard_dir), "%s/%.2s", OBJECTS_DIR, hex);
 mkdir(shard_dir, 0755);
 
 
+char final_path[256];
+snprintf(final_path, sizeof(final_path), "%s/%.2s/%s", OBJECTS_DIR, hex, hex + 2);
+
+char tmp_path[264];
+snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", final_path);
+
 
 }
 
