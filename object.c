@@ -110,6 +110,15 @@ memcpy(full_obj + header_len, data, len);
 
 
 
+ObjectID id;
+compute_hash(full_obj, total_len, &id);
+
+if (object_exists(&id)) {
+    *id_out = id;
+    free(full_obj);
+    return 0;
+}
+
 
 }
 
