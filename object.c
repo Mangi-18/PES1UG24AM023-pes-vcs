@@ -217,4 +217,19 @@ if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
     return -1;
 
 }
+if      (strncmp((char *)buf, "blob",   4) == 0) *type_out = OBJ_BLOB;
+else if (strncmp((char *)buf, "tree",   4) == 0) *type_out = OBJ_TREE;
+else if (strncmp((char *)buf, "commit", 6) == 0) *type_out = OBJ_COMMIT;
+else {
+    free(buf);
+    return -1;
+}
+if      (strncmp((char *)buf, "blob",   4) == 0) *type_out = OBJ_BLOB;
+else if (strncmp((char *)buf, "tree",   4) == 0) *type_out = OBJ_TREE;
+else if (strncmp((char *)buf, "commit", 6) == 0) *type_out = OBJ_COMMIT;
+else {
+    free(buf);
+    return -1;
+}
+
 }
