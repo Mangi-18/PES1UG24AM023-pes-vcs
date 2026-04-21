@@ -25,6 +25,11 @@
 #include <dirent.h>
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
+static int compare_index_entries(const void *a, const void *b) {
+    const IndexEntry *ea = (const IndexEntry *)a;
+    const IndexEntry *eb = (const IndexEntry *)b;
+    return strcmp(ea->path, eb->path);
+}
 
 // Find an index entry by path (linear scan).
 IndexEntry* index_find(Index *index, const char *path) {
@@ -134,14 +139,9 @@ int index_status(const Index *index) {
 //   - hex_to_hash                      : converting the parsed string to ObjectID
 //
 // Returns 0 on success, -1 on error.
-int index_load(Index *index) {
-    // TODO: Implement index loading
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
-}
 
-// Save the index to .pes/index atomically.
+
+//ave the index to .pes/index atomically.
 //
 // HINTS - Useful functions and syscalls:
 //   - qsort                            : sorting the entries array by path
@@ -151,14 +151,66 @@ int index_load(Index *index) {
 //   - rename                           : atomically moving the temp file over the old index
 //
 // Returns 0 on success, -1 on error.
-int index_save(const Index *index) {
-    // TODO: Implement atomic index saving
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
+int index_load(Index *index) {
+	memset(index,0,sizeof(Index));
+    FILE *f = fopen(INDEX_FILE, "r");
+    if (!f) return 0; // No index yet — not an error
+
+    char hex[HASH_HEX_SIZE + 1];
+    char path[256];
+    unsigned int mode;
+    unsigned long long mtime, size;
+
+    while (index->count < MAX_INDEX_ENTRIES) {
+        int matched = fscanf(f, "%o %64s %llu %llu %255s\n",
+                             &mode, hex, &mtime, &size, path);
+        if (matched != 5) break;
+
+        IndexEntry *e = &index->entries[index->count];
+        e->mode = mode;
+        e->mtime_sec = (uint64_t)mtime;
+        e->size = (uint64_t)size;
+        strncpy(e->path, path, sizeof(e->path) - 1);
+        e->path[sizeof(e->path) - 1] = '\0';
+
+        if (hex_to_hash(hex, &e->hash) != 0) {
+            fclose(f);
+            return -1;
+        }
+
+        index->count++;
+    }
+
+    fclose(f);
+    return 0;
 }
 
-// Stage a file for the next commit.
+int index_save(const Index *index) {
+    if (!index) return -1;
+
+    FILE *f = fopen(INDEX_FILE, "w");
+    if (!f) return -1;
+
+    char hex[HASH_HEX_SIZE + 1];
+
+    for (int i = 0; i < index->count; i++) {
+        IndexEntry *e = (IndexEntry *)&index->entries[i];
+
+        hash_to_hex(&e->hash, hex);
+
+        fprintf(f, "%o %s %llu %llu %s\n",
+                e->mode,
+                hex,
+                (unsigned long long)e->mtime_sec,
+                (unsigned long long)e->size,
+                e->path);
+    }
+
+    fclose(f);
+    return 0;
+}
+
+//a file for the next commit.
 //
 // HINTS - Useful functions and syscalls:
 //   - fopen, fread, fclose             : reading the target file's contents
@@ -168,8 +220,59 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
+    // Read file contents
+if(!index) return -1;    
+FILE *f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr, "error: cannot open '%s'\n", path);
+        return -1;
+    }
+
+    fseek(f, 0, SEEK_END);
+    size_t size = (size_t)ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    void *buf =malloc(size ? size : 1);
+if(size>0 && fread(buf,1,size,f)!=size){
+free(buf);
+fclose(f);
+return -1;
 }
+    if (!buf) {
+        fclose(f);
+        return -1;
+    }
+
+    fread(buf, 1, size, f);
+    fclose(f);
+
+    // Write blob
+    ObjectID hash;
+    if (object_write(OBJ_BLOB, buf, size, &hash) != 0) {
+        free(buf);
+        return -1;
+    }
+    free(buf);
+
+    // Get metadata
+    struct stat st;
+    if (lstat(path, &st) != 0) return -1;
+
+    // Update or add entry
+    IndexEntry *existing = index_find(index, path);
+    if (!existing) {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+        existing = &index->entries[index->count++];
+    }
+
+    existing->mode = (st.st_mode & S_IXUSR) ? 0100755 : 0100644;
+    existing->hash = hash;
+    existing->mtime_sec = (uint64_t)st.st_mtime;
+    existing->size = (uint64_t)st.st_size;
+
+    strncpy(existing->path, path, sizeof(existing->path) - 1);
+    existing->path[sizeof(existing->path) - 1] = '\0';
+
+    return index_save(index);
+}
+
