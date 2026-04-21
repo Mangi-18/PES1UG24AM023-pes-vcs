@@ -186,6 +186,10 @@ return 0;
 // Returns 0 on success, -1 on error (file not found, corrupt, etc.).
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
     // TODO: Implement
-    (void)id; (void)type_out; (void)data_out; (void)len_out;
-    return -1;
+  char path[512];
+object_path(id, path, sizeof(path));
+
+FILE *f = fopen(path, "rb");
+if (!f) return -1;
+
 }
