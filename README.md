@@ -604,19 +604,19 @@ The following questions cover filesystem concepts beyond the implementation scop
 ## Screenshots
 
 ### Phase 1
-![1A](phase1_1a.png)
+![1A](phase1_1A.png)
 ![1B](phase1_1b.png)
 
 ### Phase 2
-![2A](phase2_2a.png)
+![2A](phase2_2A.png)
 ![2B](phase2_2b.png)
 
 ### Phase 3
-![3A](phase3_3a.png)
+![3A](phase3_3A.png)
 ![3B](phase3_3b.png)
 
 ### Phase 4
-![4A](phase4_4a.png)
+![4A](phase4_4A.png)
 ![4B](phase4_4b.png)
 ![4C](phase4_4c.png)
 
