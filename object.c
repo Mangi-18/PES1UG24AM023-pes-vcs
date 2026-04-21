@@ -217,19 +217,28 @@ if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
     return -1;
 
 }
+uint8_t *null_byte = memchr(buf, '\0', file_size);
+if (!null_byte) { free(buf); return -1; }
+
 if      (strncmp((char *)buf, "blob",   4) == 0) *type_out = OBJ_BLOB;
 else if (strncmp((char *)buf, "tree",   4) == 0) *type_out = OBJ_TREE;
 else if (strncmp((char *)buf, "commit", 6) == 0) *type_out = OBJ_COMMIT;
-else {
-    free(buf);
-    return -1;
-}
-if      (strncmp((char *)buf, "blob",   4) == 0) *type_out = OBJ_BLOB;
-else if (strncmp((char *)buf, "tree",   4) == 0) *type_out = OBJ_TREE;
-else if (strncmp((char *)buf, "commit", 6) == 0) *type_out = OBJ_COMMIT;
-else {
-    free(buf);
-    return -1;
-}
+else { free(buf); return -1; }
+
+size_t header_len = (size_t)(null_byte - buf) + 1;
+size_t data_len =file_size-header_len;
+void *data = malloc(data_len + 1);
+if (!data) { free(buf); return -1; }
+
+memcpy(data, null_byte + 1, data_len);
+((uint8_t *)data)[data_len] = '\0';
+
+*data_out = data;
+*len_out = data_len;
+
+free(buf);
+return 0;
+
+
 
 }
