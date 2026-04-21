@@ -192,4 +192,22 @@ object_path(id, path, sizeof(path));
 FILE *f = fopen(path, "rb");
 if (!f) return -1;
 
+
+fseek(f, 0, SEEK_END);
+size_t file_size = (size_t)ftell(f);
+fseek(f, 0, SEEK_SET);
+
+uint8_t *buf = malloc(file_size);
+if (!buf) {
+    fclose(f);
+    return -1;
+}
+
+if (fread(buf, 1, file_size, f) != file_size) {
+    fclose(f);
+    free(buf);
+    return -1;
+}
+fclose(f);
+
 }
